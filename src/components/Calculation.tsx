@@ -2,16 +2,18 @@ import { useRef, useState, type FormEvent } from 'react'
 import type { CalculationQuestion } from '../types'
 import { formatValue, parseNumeric } from '../lib/numeric'
 import { gradeCalculation } from '../lib/grade'
+import { ActionBar } from './ActionBar'
 import { ExplanationBlock } from './ExplanationBlock'
 
 interface Props {
   q: CalculationQuestion
   onGraded: (correct: boolean) => void
   onNext: () => void
+  onBack?: () => void
 }
 
 /** Serves both `calculation` and `param_count`: one numeric box per part; expressions are accepted. */
-export function Calculation({ q, onGraded, onNext }: Props) {
+export function Calculation({ q, onGraded, onNext, onBack }: Props) {
   const [values, setValues] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
   const [revealed, setRevealed] = useState(false)
@@ -41,7 +43,7 @@ export function Calculation({ q, onGraded, onNext }: Props) {
   }
 
   return (
-    <form onSubmit={check}>
+    <form className="answer-area" onSubmit={check}>
       <div className="numeric-parts">
         {q.parts.map((p, i) => {
           const raw = values[p.id] ?? ''
@@ -104,21 +106,13 @@ export function Calculation({ q, onGraded, onNext }: Props) {
         </>
       )}
 
-      <div className="actions">
-        {!done && (
-          <>
-            <button type="submit" className="btn primary" disabled={!anyInput}>
-              Check
-            </button>
-            <button type="button" className="btn" onClick={reveal}>
-              Show solution
-            </button>
-          </>
-        )}
-        <button type="button" className={`btn ${done ? 'primary' : ''}`} onClick={onNext}>
-          {done ? 'Next question →' : 'Skip →'}
-        </button>
-      </div>
+      <ActionBar
+        done={done}
+        onNext={onNext}
+        onBack={onBack}
+        check={{ disabled: !anyInput }}
+        reveal={{ label: 'Show solution', onClick: reveal }}
+      />
     </form>
   )
 }

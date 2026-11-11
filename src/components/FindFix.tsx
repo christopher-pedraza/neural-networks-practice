@@ -1,14 +1,16 @@
 import { useRef, useState, type FormEvent } from 'react'
 import type { FindFixQuestion } from '../types'
 import { gradeFindFix } from '../lib/grade'
+import { ActionBar } from './ActionBar'
 
 interface Props {
   q: FindFixQuestion
   onGraded: (correct: boolean) => void
   onNext: () => void
+  onBack?: () => void
 }
 
-export function FindFix({ q, onGraded, onNext }: Props) {
+export function FindFix({ q, onGraded, onNext, onBack }: Props) {
   const lines = q.code.split('\n')
   const [marked, setMarked] = useState<Set<number>>(new Set())
   const [fixes, setFixes] = useState<Record<number, string>>({})
@@ -57,7 +59,7 @@ export function FindFix({ q, onGraded, onNext }: Props) {
   const found = [...result.verdicts.values()].filter((v) => v !== 'not-an-error').length
 
   return (
-    <form onSubmit={check}>
+    <form className="answer-area" onSubmit={check}>
       <p className="muted">
         Click a line number (or the line) to flag it as wrong, then type the corrected line.
         {q.errors.length > 1 ? ` There are ${q.errors.length} errors.` : ' There is 1 error.'}
@@ -147,21 +149,13 @@ export function FindFix({ q, onGraded, onNext }: Props) {
         </div>
       )}
 
-      <div className="actions">
-        {!done && (
-          <>
-            <button type="submit" className="btn primary" disabled={marked.size === 0}>
-              Check
-            </button>
-            <button type="button" className="btn" onClick={reveal}>
-              Show solution
-            </button>
-          </>
-        )}
-        <button type="button" className={`btn ${done ? 'primary' : ''}`} onClick={onNext}>
-          {done ? 'Next question →' : 'Skip →'}
-        </button>
-      </div>
+      <ActionBar
+        done={done}
+        onNext={onNext}
+        onBack={onBack}
+        check={{ disabled: marked.size === 0 }}
+        reveal={{ label: 'Show solution', onClick: reveal }}
+      />
     </form>
   )
 }

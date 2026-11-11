@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { OpenEndedQuestion } from '../types'
+import { ActionBar } from './ActionBar'
 import { ExplanationBlock } from './ExplanationBlock'
 import { RichInline, RichText } from './RichText'
 
@@ -7,10 +8,11 @@ interface Props {
   q: OpenEndedQuestion
   onGraded: (correct: boolean) => void
   onNext: () => void
+  onBack?: () => void
 }
 
 /** Free-text answer, then reveal the model answer and self-grade against its key points. */
-export function OpenEnded({ q, onGraded, onNext }: Props) {
+export function OpenEnded({ q, onGraded, onNext, onBack }: Props) {
   const [text, setText] = useState('')
   const [revealed, setRevealed] = useState(false)
   const [covered, setCovered] = useState<Set<number>>(new Set())
@@ -36,7 +38,7 @@ export function OpenEnded({ q, onGraded, onNext }: Props) {
   }
 
   return (
-    <div>
+    <div className="answer-area">
       <label className="open-answer">
         <span className="muted">Your answer (optional — it is not graded automatically)</span>
         <textarea
@@ -87,16 +89,12 @@ export function OpenEnded({ q, onGraded, onNext }: Props) {
         </>
       )}
 
-      <div className="actions">
-        {!revealed && (
-          <button type="button" className="btn primary" onClick={() => setRevealed(true)}>
-            Show model answer
-          </button>
-        )}
-        <button type="button" className={`btn ${rated !== null ? 'primary' : ''}`} onClick={onNext}>
-          {rated !== null ? 'Next question →' : 'Skip →'}
-        </button>
-      </div>
+      <ActionBar
+        done={rated !== null}
+        onNext={onNext}
+        onBack={onBack}
+        reveal={revealed ? undefined : { label: 'Show model answer', onClick: () => setRevealed(true) }}
+      />
     </div>
   )
 }

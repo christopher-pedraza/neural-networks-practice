@@ -14,12 +14,14 @@ interface Props {
   q: Question
   onGraded: (correct: boolean) => void
   onNext: () => void
+  /** Back to the previously shown question; undefined when there is none. */
+  onBack?: () => void
   onOpenReference: (name: string) => void
   /** Show the per-blank placeholder text (a hint). Defaults to true. */
   showPlaceholders?: boolean
 }
 
-export function QuestionView({ q, onGraded, onNext, onOpenReference, showPlaceholders = true }: Props) {
+export function QuestionView({ q, onGraded, onNext, onBack, onOpenReference, showPlaceholders = true }: Props) {
   // The related APIs name the functions you need to recall, so they stay hidden until asked for (per question).
   const [relatedShown, setRelatedShown] = useState(false)
   const related = q.related_reference ?? []
@@ -74,16 +76,16 @@ export function QuestionView({ q, onGraded, onNext, onOpenReference, showPlaceho
       {(() => {
         switch (q.type) {
           case 'fill_blank':
-            return <FillBlank q={q} onGraded={onGraded} onNext={onNext} showPlaceholders={showPlaceholders} />
+            return <FillBlank q={q} onGraded={onGraded} onNext={onNext} onBack={onBack} showPlaceholders={showPlaceholders} />
           case 'find_fix':
-            return <FindFix q={q} onGraded={onGraded} onNext={onNext} />
+            return <FindFix q={q} onGraded={onGraded} onNext={onNext} onBack={onBack} />
           case 'multiple_choice':
-            return <MultipleChoice q={q} onGraded={onGraded} onNext={onNext} />
+            return <MultipleChoice q={q} onGraded={onGraded} onNext={onNext} onBack={onBack} />
           case 'calculation':
           case 'param_count':
-            return <Calculation q={q} onGraded={onGraded} onNext={onNext} />
+            return <Calculation q={q} onGraded={onGraded} onNext={onNext} onBack={onBack} />
           case 'open_ended':
-            return <OpenEnded q={q} onGraded={onGraded} onNext={onNext} />
+            return <OpenEnded q={q} onGraded={onGraded} onNext={onNext} onBack={onBack} />
         }
       })()}
     </article>

@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import type { MultipleChoiceQuestion } from '../types'
 import { gradeChoice } from '../lib/grade'
+import { ActionBar } from './ActionBar'
 import { ExplanationBlock } from './ExplanationBlock'
 import { RichInline } from './RichText'
 
@@ -8,11 +9,12 @@ interface Props {
   q: MultipleChoiceQuestion
   onGraded: (correct: boolean) => void
   onNext: () => void
+  onBack?: () => void
 }
 
 const letter = (i: number) => String.fromCharCode(65 + i)
 
-export function MultipleChoice({ q, onGraded, onNext }: Props) {
+export function MultipleChoice({ q, onGraded, onNext, onBack }: Props) {
   const multi = q.selection === 'multiple'
   const [picked, setPicked] = useState<Set<number>>(new Set())
   const [checked, setChecked] = useState(false)
@@ -56,7 +58,7 @@ export function MultipleChoice({ q, onGraded, onNext }: Props) {
   const nCorrect = q.options.filter((o) => o.correct).length
 
   return (
-    <form onSubmit={check}>
+    <form className="answer-area" onSubmit={check}>
       <fieldset className="choices" disabled={done}>
         <legend className="muted">
           {multi ? `Select all that apply (${nCorrect === 1 ? 'one or more answers may be correct' : 'one or more'})` : 'Select one answer'}
@@ -109,21 +111,13 @@ export function MultipleChoice({ q, onGraded, onNext }: Props) {
 
       {done && <ExplanationBlock text={q.explanation} />}
 
-      <div className="actions">
-        {!done && (
-          <>
-            <button type="submit" className="btn primary" disabled={picked.size === 0}>
-              Check
-            </button>
-            <button type="button" className="btn" onClick={reveal}>
-              Show answer
-            </button>
-          </>
-        )}
-        <button type="button" className={`btn ${done ? 'primary' : ''}`} onClick={onNext}>
-          {done ? 'Next question →' : 'Skip →'}
-        </button>
-      </div>
+      <ActionBar
+        done={done}
+        onNext={onNext}
+        onBack={onBack}
+        check={{ disabled: picked.size === 0 }}
+        reveal={{ label: 'Show answer', onClick: reveal }}
+      />
     </form>
   )
 }
