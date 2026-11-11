@@ -3,6 +3,12 @@ import type { Question } from '../types'
 import { FillBlank } from './FillBlank'
 import { FindFix } from './FindFix'
 import { Hints } from './Hints'
+import { MultipleChoice } from './MultipleChoice'
+import { Calculation } from './Calculation'
+import { OpenEnded } from './OpenEnded'
+import { CodeBlock } from './CodeBlock'
+import { RichText } from './RichText'
+import { TYPE_LABEL } from '../lib/questionTypes'
 
 interface Props {
   q: Question
@@ -12,8 +18,6 @@ interface Props {
   /** Show the per-blank placeholder text (a hint). Defaults to true. */
   showPlaceholders?: boolean
 }
-
-const TYPE_LABEL = { fill_blank: 'Fill in the blanks', find_fix: 'Identify & correct' } as const
 
 export function QuestionView({ q, onGraded, onNext, onOpenReference, showPlaceholders = true }: Props) {
   // The related APIs name the functions you need to recall, so they stay hidden until asked for (per question).
@@ -31,10 +35,20 @@ export function QuestionView({ q, onGraded, onNext, onOpenReference, showPlaceho
         <h2>{q.title}</h2>
       </header>
 
-      <section className="description">
-        <h3>What this code does</h3>
-        <p>{q.description}</p>
-      </section>
+      {q.type === 'fill_blank' || q.type === 'find_fix' ? (
+        <section className="description">
+          <h3>What this code does</h3>
+          <p>{q.description}</p>
+        </section>
+      ) : (
+        <>
+          <section className="description prompt">
+            <h3>Question</h3>
+            <RichText text={q.prompt} />
+          </section>
+          {q.code && <CodeBlock code={q.code} />}
+        </>
+      )}
 
       {related.length > 0 && (
         <div className="related">
@@ -55,13 +69,23 @@ export function QuestionView({ q, onGraded, onNext, onOpenReference, showPlaceho
         </div>
       )}
 
-      <Hints hints={q.hints} />
+      {q.hints && q.hints.length > 0 && <Hints hints={q.hints} />}
 
-      {q.type === 'fill_blank' ? (
-        <FillBlank q={q} onGraded={onGraded} onNext={onNext} showPlaceholders={showPlaceholders} />
-      ) : (
-        <FindFix q={q} onGraded={onGraded} onNext={onNext} />
-      )}
+      {(() => {
+        switch (q.type) {
+          case 'fill_blank':
+            return <FillBlank q={q} onGraded={onGraded} onNext={onNext} showPlaceholders={showPlaceholders} />
+          case 'find_fix':
+            return <FindFix q={q} onGraded={onGraded} onNext={onNext} />
+          case 'multiple_choice':
+            return <MultipleChoice q={q} onGraded={onGraded} onNext={onNext} />
+          case 'calculation':
+          case 'param_count':
+            return <Calculation q={q} onGraded={onGraded} onNext={onNext} />
+          case 'open_ended':
+            return <OpenEnded q={q} onGraded={onGraded} onNext={onNext} />
+        }
+      })()}
     </article>
   )
 }

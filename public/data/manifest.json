@@ -4,7 +4,8 @@
     "questions/p2_student.jsonl",
     "questions/pa3_notebook.jsonl",
     "questions/pa4_notebook.jsonl",
-    "questions/pa5_notebook.jsonl"
+    "questions/pa5_notebook.jsonl",
+    "questions/examples_conceptual.jsonl"
   ],
   "reference": "pytorch_reference.json"
 }

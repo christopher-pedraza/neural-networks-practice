@@ -100,19 +100,21 @@ code, pre { font-family: var(--mono); }
 .diff-hard { color: var(--bad); }
 
 /* ---- category filter ----------------------------------------------------- */
-.filter {
+.sidebar {
   background: var(--panel); border-right: 1px solid var(--border);
-  padding: 16px; overflow-y: auto;
+  overflow-y: auto;
 }
+.filter-section { padding: 16px; }
+.filter-section + .filter-section { border-top: 1px solid var(--border); }
 .filter-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
 .filter-head h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-.filter ul { list-style: none; margin: 0; padding: 0; }
-.filter li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 0; }
-.filter label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
+.filter-section ul { list-style: none; margin: 0; padding: 0; }
+.filter-section li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 0; }
+.filter-section label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
 .cat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .count { margin-left: auto; color: var(--muted); font-size: 12px; }
 .only { visibility: hidden; }
-.filter li:hover .only { visibility: visible; }
+.filter-section li:hover .only { visibility: visible; }
 
 /* ---- question ------------------------------------------------------------ */
 .question { max-width: 900px; margin: 0 auto; }
@@ -185,6 +187,54 @@ textarea.blank-input { vertical-align: top; line-height: 1.5; resize: both; }
 .solution code.canonical { outline: 1px solid var(--ok); }
 .explanation { margin: 8px 0 0; }
 .actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* ---- conceptual question types ------------------------------------------- */
+.rich p { margin: 0 0 8px; white-space: pre-wrap; }
+.rich p:last-child { margin-bottom: 0; }
+.rich code, .choice code, .key-points code, .numeric-hint code {
+  background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.9em;
+}
+.rich .math-display { display: block; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.rich .math-display .katex-display { margin: 0.5em 0; }
+.katex { font-size: 1.05em; white-space: normal; }
+.code.plain { padding: 10px 14px; white-space: pre; overflow-x: auto; }
+.choices { border: 0; padding: 0; margin: 12px 0 0; min-width: 0; }
+.choices legend { padding: 0; margin-bottom: 6px; font-size: 13px; }
+.choice {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 12px; margin: 6px 0;
+}
+.choice label { display: flex; align-items: baseline; gap: 10px; cursor: pointer; }
+.choices:disabled .choice label { cursor: default; }
+.choice input { accent-color: var(--accent); }
+.choice-letter { font-weight: 600; color: var(--muted); min-width: 1.2em; }
+.choice-text { flex: 1; }
+.choice.picked { border-color: var(--accent); background: var(--reveal-bg); }
+.choice.ok { border-color: var(--ok); background: var(--ok-bg); }
+.choice.bad { border-color: var(--bad); background: var(--bad-bg); }
+.choice.missed { border-color: var(--ok); border-style: dashed; }
+.choice-why { margin: 6px 0 0 34px; font-size: 14px; }
+.explanation-block {
+  background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--ok);
+  border-radius: 6px; padding: 12px 16px; margin: 12px 0;
+}
+.explanation-block h3, .model-answer h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+.numeric-parts { margin: 12px 0 4px; display: grid; gap: 8px; }
+.numeric-part { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.numeric-part label { display: flex; align-items: center; gap: 10px; }
+.numeric-label { font-weight: 500; }
+.numeric-input { width: 26ch; }
+.numeric-hint { font-size: 13px; margin: 4px 0 0; }
+.open-answer { display: block; margin-top: 12px; }
+.open-answer textarea { display: block; width: 100%; margin-top: 4px; font-family: inherit; }
+.model-answer {
+  background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+  border-radius: 6px; padding: 12px 16px; margin: 12px 0;
+}
+.model-answer h3:not(:first-child) { margin-top: 12px; }
+.key-points { list-style: none; margin: 4px 0 0; padding: 0; }
+.key-points label { display: flex; gap: 8px; align-items: baseline; cursor: pointer; padding: 2px 0; }
+.key-points input { accent-color: var(--accent); }
 
 /* ---- reference panel ------------------------------------------------------ */
 .ref-panel {

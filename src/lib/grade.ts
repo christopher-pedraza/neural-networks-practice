@@ -1,5 +1,6 @@
-import type { Blank, FindFixQuestion } from '../types'
+import type { Blank, CalculationQuestion, FindFixQuestion, MultipleChoiceQuestion } from '../types'
 import { matchesAny } from './normalize.ts'
+import { gradeNumeric } from './numeric.ts'
 
 export function gradeBlank(blank: Blank, input: string): boolean {
   return matchesAny(input, blank.answers, blank.accepted_patterns)
@@ -30,4 +31,27 @@ export function gradeFindFix(
   const missed = q.errors.filter((e) => !marked.has(e.line)).map((e) => e.line)
   const allCorrect = missed.length === 0 && [...verdicts.values()].every((v) => v === 'correct')
   return { verdicts, missed, allCorrect }
+}
+
+export interface ChoiceResult {
+  /** Exactly the correct set was picked. */
+  correct: boolean
+  wrongPicks: number
+  missed: number
+}
+
+/** All-or-nothing, as in the quizzes: the picked set must equal the set of correct options. */
+export function gradeChoice(q: MultipleChoiceQuestion, picked: ReadonlySet<number>): ChoiceResult {
+  let wrongPicks = 0
+  let missed = 0
+  q.options.forEach((o, i) => {
+    if (picked.has(i) && !o.correct) wrongPicks++
+    if (!picked.has(i) && o.correct) missed++
+  })
+  return { correct: wrongPicks === 0 && missed === 0, wrongPicks, missed }
+}
+
+/** Verdict per part id. */
+export function gradeCalculation(q: CalculationQuestion, values: Readonly<Record<string, string>>): Map<string, boolean> {
+  return new Map(q.parts.map((p) => [p.id, gradeNumeric(p, values[p.id] ?? '')]))
 }

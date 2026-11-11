@@ -11,10 +11,13 @@
     "build": "npm run validate && tsc -b && vite build",
     "preview": "vite preview",
     "validate": "node scripts/validate-data.mjs",
+    "prompts": "node scripts/build-prompts.mjs",
+    "import": "node scripts/import-questions.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run"
   },
   "dependencies": {
+    "katex": "^0.19.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

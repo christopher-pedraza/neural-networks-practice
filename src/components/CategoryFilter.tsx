@@ -13,7 +13,7 @@ export function CategoryFilter({ counts, selected, onChange }: Props) {
     onChange(next)
   }
   return (
-    <nav className="filter" aria-label="Categories">
+    <nav className="filter-section" aria-label="Categories">
       <div className="filter-head">
         <h3>Categories</h3>
         <div>

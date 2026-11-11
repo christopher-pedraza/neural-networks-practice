@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { RichInline } from './RichText'
 
 export function Hints({ hints }: { hints: string[] }) {
   const [shown, setShown] = useState(0)
@@ -12,7 +13,9 @@ export function Hints({ hints }: { hints: string[] }) {
       {shown > 0 && (
         <ol className="hint-list">
           {hints.slice(0, shown).map((h, i) => (
-            <li key={i}>{h}</li>
+            <li key={i}>
+              <RichInline text={h} />
+            </li>
           ))}
         </ol>
       )}

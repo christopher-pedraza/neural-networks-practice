@@ -2,21 +2,24 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "question.schema.json",
   "title": "Practice question",
-  "description": "One question. In a .jsonl file each line is one of these objects; in a .json file the top level is an array of them.",
+  "description": "One question. In a .jsonl file each line is one of these objects; in a .json file the top level is an array of them. Programming types (fill_blank, find_fix) and conceptual types (multiple_choice, calculation, param_count, open_ended) share the common fields but use different content fields - see the 'allOf' rules at the bottom.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "type", "category", "title", "description", "code", "hints"],
+  "required": ["id", "type", "category", "title"],
   "properties": {
     "id": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9_.-]*$",
       "description": "Unique across ALL question files. e.g. 'lin-reg-train-loop-01'."
     },
-    "type": { "enum": ["fill_blank", "find_fix"] },
+    "type": {
+      "enum": ["fill_blank", "find_fix", "multiple_choice", "calculation", "param_count", "open_ended"],
+      "description": "fill_blank / find_fix: programming. multiple_choice: closed question with options. calculation: free numeric answer(s) (loss values, output shapes, ...). param_count: like calculation but about trainable-parameter / weight counts. open_ended: free text, self-graded against a model answer."
+    },
     "category": {
       "type": "string",
       "minLength": 1,
-      "description": "Category / script provenance used by the filter UI, e.g. '01_linear_regression.py'. Use the exact same string for questions from the same script."
+      "description": "Category / provenance used by the filter UI: the script file for programming questions (e.g. '01_linear_regression.py') or the source document for the other types (e.g. 'GeneralAssignment3.md', 'Quiz1A_reference_solution.pdf'). Use the exact same string for every question from the same file."
     },
     "source": {
       "type": "object",
@@ -24,35 +27,96 @@
       "required": ["script"],
       "properties": {
         "script": { "type": "string" },
-        "lines": { "type": "string", "description": "Original line range, e.g. '34-52'." }
+        "lines": { "type": "string", "description": "Original line range, e.g. '34-52'." },
+        "item": { "type": "string", "description": "Where in a source document the question comes from, e.g. 'Question 12' or 'Part II.2'." }
       }
     },
     "title": { "type": "string", "minLength": 1 },
     "description": {
       "type": "string",
       "minLength": 1,
-      "description": "1-3 sentences: what the (correct) snippet does overall and why. Always shown to the learner. Must NOT leak the answer."
+      "description": "Programming types only. 1-3 sentences: what the (correct) snippet does overall and why. Always shown to the learner. Must NOT leak the answer."
     },
     "difficulty": { "enum": ["easy", "medium", "hard"] },
     "tags": { "type": "array", "items": { "type": "string" } },
     "code": {
       "type": "string",
-      "description": "Python source, lines separated by \\n. fill_blank: contains <<BLANK:id>> markers. find_fix: the BUGGY code."
+      "description": "Programming types: Python source, lines separated by \\n (fill_blank: contains <<BLANK:id>> markers; find_fix: the BUGGY code). Other types: optional supporting material shown in a code block under the prompt - a model definition, a matrix, a shape table. Must NOT contain <<BLANK:...>> markers."
     },
     "hints": {
       "type": "array",
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 },
-      "description": "Ordered from vague to specific. Revealed one at a time. The last hint may be nearly the answer."
+      "description": "Ordered from vague to specific. Revealed one at a time. The last hint may be nearly the answer. Required for programming types, optional for the others."
     },
     "explanation": {
       "type": "string",
-      "description": "Shown after checking / revealing. Why the answer is what it is."
+      "description": "Shown after checking / revealing. Programming types: optional, why the answer is what it is. multiple_choice / calculation / param_count / open_ended: REQUIRED - the full reasoning (why the correct answer is right and, for multiple_choice, why the others are wrong; or the worked calculation)."
     },
     "related_reference": {
       "type": "array",
       "items": { "type": "string" },
       "description": "Names of entries (see reference.schema.json 'name') that help with this question. Shown as chips that open the reference panel."
+    },
+
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Non-programming types: the question text. Plain text; `inline code`, **bold**, $inline LaTeX$ and $$display LaTeX$$ (KaTeX) are rendered. In JSON, double every LaTeX backslash (\\times, \\frac). A blank line starts a new paragraph."
+    },
+    "selection": {
+      "enum": ["single", "multiple"],
+      "description": "multiple_choice only. 'single': exactly one option is correct (radio buttons). 'multiple': one or more are correct (check boxes); graded all-or-nothing, like the quizzes."
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "description": "multiple_choice only. Shown in this order, labelled A, B, C... by position. Never refer to other options by letter in any text.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text", "correct", "explanation"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "description": "The option as the learner sees it. `inline code` allowed." },
+          "correct": { "type": "boolean" },
+          "explanation": {
+            "type": "string",
+            "minLength": 10,
+            "description": "REQUIRED for every option. Correct option: why it is right. Incorrect option: the specific reason it is wrong (the misconception, or the true fact) - never just 'this is wrong'."
+          }
+        }
+      }
+    },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "description": "calculation / param_count only. One numeric answer box per entry.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "value"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+          "label": { "type": "string", "description": "What this box asks for, e.g. 'in_features' or 'Total trainable parameters'. Required when there is more than one part." },
+          "value": { "type": "number", "description": "The correct answer." },
+          "tolerance": { "type": "number", "minimum": 0, "description": "Accepted absolute error. Default 0 = exact (use for counts and shapes). For decimals set e.g. 0.005 when 2 decimals are expected." },
+          "unit": { "type": "string", "description": "Optional text shown after the input, e.g. 'parameters'." }
+        }
+      }
+    },
+    "model_answer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "open_ended only. A complete, concise reference answer (2-6 sentences)."
+    },
+    "key_points": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "open_ended only. The checklist a good answer must hit; the learner ticks the ones they covered when self-grading."
     },
 
     "blanks": {
@@ -105,12 +169,48 @@
   },
   "allOf": [
     {
+      "if": { "properties": { "type": { "enum": ["fill_blank", "find_fix"] } }, "required": ["type"] },
+      "then": {
+        "required": ["description", "code", "hints"],
+        "not": { "anyOf": [{ "required": ["prompt"] }, { "required": ["selection"] }, { "required": ["options"] }, { "required": ["parts"] }, { "required": ["model_answer"] }, { "required": ["key_points"] }] }
+      }
+    },
+    {
       "if": { "properties": { "type": { "const": "fill_blank" } }, "required": ["type"] },
       "then": { "required": ["blanks"], "not": { "required": ["errors"] } }
     },
     {
       "if": { "properties": { "type": { "const": "find_fix" } }, "required": ["type"] },
       "then": { "required": ["errors"], "not": { "required": ["blanks"] } }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["multiple_choice", "calculation", "param_count", "open_ended"] } }, "required": ["type"] },
+      "then": {
+        "required": ["prompt", "explanation"],
+        "properties": { "explanation": { "type": "string", "minLength": 30 } },
+        "not": { "anyOf": [{ "required": ["description"] }, { "required": ["blanks"] }, { "required": ["errors"] }] }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "multiple_choice" } }, "required": ["type"] },
+      "then": {
+        "required": ["selection", "options"],
+        "not": { "anyOf": [{ "required": ["parts"] }, { "required": ["model_answer"] }, { "required": ["key_points"] }] }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["calculation", "param_count"] } }, "required": ["type"] },
+      "then": {
+        "required": ["parts"],
+        "not": { "anyOf": [{ "required": ["selection"] }, { "required": ["options"] }, { "required": ["model_answer"] }, { "required": ["key_points"] }] }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "open_ended" } }, "required": ["type"] },
+      "then": {
+        "required": ["model_answer", "key_points"],
+        "not": { "anyOf": [{ "required": ["selection"] }, { "required": ["options"] }, { "required": ["parts"] }] }
+      }
     }
   ]
 }

@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { loadAll, type LoadedData } from './lib/data'
 import { usePractice } from './hooks/usePractice'
+import { usePersistedSelection } from './hooks/usePersistedSelection'
 import { CategoryFilter } from './components/CategoryFilter'
+import { TypeFilter } from './components/TypeFilter'
 import { QuestionView } from './components/QuestionView'
 import { ReferencePanel } from './components/ReferencePanel'
+import type { QuestionType } from './types'
 
-const STORAGE_KEY = 'pa-practice:categories'
+// Both store what the user switched OFF, so newly added categories/types show up by default.
+const CATEGORIES_KEY = 'pa-practice:hidden-categories'
+const TYPES_KEY = 'pa-practice:hidden-types'
 const PLACEHOLDER_KEY = 'pa-practice:show-placeholders'
 
 /** Per-session (sessionStorage) so it survives a reload but resets in a new tab/session. */
@@ -15,19 +20,6 @@ function loadShowPlaceholders(): boolean {
   } catch {
     return true
   }
-}
-
-function loadSavedCategories(available: string[]): Set<string> {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as string[] | null
-    if (Array.isArray(saved)) {
-      const valid = saved.filter((c) => available.includes(c))
-      if (valid.length > 0 || saved.length === 0) return new Set(valid)
-    }
-  } catch {
-    /* ignore corrupt storage */
-  }
-  return new Set(available)
 }
 
 export default function App() {
@@ -50,14 +42,18 @@ function Practice({ data }: { data: LoadedData }) {
     return m
   }, [data.questions])
 
-  const [selected, setSelected] = useState(() => loadSavedCategories([...counts.keys()]))
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...selected]))
-  }, [selected])
+  const typeCounts = useMemo(() => {
+    const m = new Map<QuestionType, number>()
+    for (const q of data.questions) m.set(q.type, (m.get(q.type) ?? 0) + 1)
+    return m
+  }, [data.questions])
+
+  const [selected, setSelected] = usePersistedSelection(CATEGORIES_KEY, [...counts.keys()])
+  const [selectedTypes, setSelectedTypes] = usePersistedSelection<QuestionType>(TYPES_KEY, [...typeCounts.keys()])
 
   const pool = useMemo(
-    () => data.questions.filter((q) => selected.has(q.category)),
-    [data.questions, selected],
+    () => data.questions.filter((q) => selected.has(q.category) && selectedTypes.has(q.type)),
+    [data.questions, selected, selectedTypes],
   )
   const { current, next, instanceKey } = usePractice(pool)
 
@@ -87,7 +83,7 @@ function Practice({ data }: { data: LoadedData }) {
   return (
     <div className={`app ${refOpen ? 'with-ref' : ''}`}>
       <header className="topbar">
-        <h1>Programming Assignments Practice</h1>
+        <h1>Neural Networks Practice</h1>
         <div className="topbar-right">
           <span className="stats" title="Questions answered correctly on the first check">
             First-try correct: <strong>{stats.firstTry}</strong> / {stats.attempted}
@@ -110,7 +106,10 @@ function Practice({ data }: { data: LoadedData }) {
         </div>
       </header>
 
-      <CategoryFilter counts={counts} selected={selected} onChange={setSelected} />
+      <aside className="sidebar">
+        <TypeFilter counts={typeCounts} selected={selectedTypes} onChange={setSelectedTypes} />
+        <CategoryFilter counts={counts} selected={selected} onChange={setSelected} />
+      </aside>
 
       <main className="main">
         {current ? (
@@ -126,7 +125,7 @@ function Practice({ data }: { data: LoadedData }) {
           <div className="status">
             {counts.size === 0
               ? 'No questions found. Add files to public/data/questions and list them in manifest.json.'
-              : 'Select at least one category to start practising.'}
+              : 'No questions match the current filters. Select at least one question type and one category.'}
           </div>
         )}
       </main>
