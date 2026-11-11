@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import type { Blank, FillBlankQuestion } from '../types'
 import { gradeBlank } from '../lib/grade'
+import { ActionBar } from './ActionBar'
 
 const MARKER = /<<BLANK:([A-Za-z0-9_-]+)>>/g
 
@@ -24,11 +25,12 @@ interface Props {
   q: FillBlankQuestion
   onGraded: (correct: boolean) => void
   onNext: () => void
+  onBack?: () => void
   /** When false, blank placeholders and answer-length-based widths (both are hints) are hidden. */
   showPlaceholders?: boolean
 }
 
-export function FillBlank({ q, onGraded, onNext, showPlaceholders = true }: Props) {
+export function FillBlank({ q, onGraded, onNext, onBack, showPlaceholders = true }: Props) {
   const [values, setValues] = useState<Record<string, string>>({})
   const [checked, setChecked] = useState(false)
   const [revealed, setRevealed] = useState(false)
@@ -102,7 +104,7 @@ export function FillBlank({ q, onGraded, onNext, showPlaceholders = true }: Prop
   }
 
   return (
-    <form onSubmit={check}>
+    <form className="answer-area" onSubmit={check}>
       <pre className="code" aria-label="Code with blanks">
         {q.code.split('\n').map((line, i) => (
           <div className="code-line" key={i}>
@@ -141,21 +143,13 @@ export function FillBlank({ q, onGraded, onNext, showPlaceholders = true }: Prop
         </div>
       )}
 
-      <div className="actions">
-        {!done && (
-          <>
-            <button type="submit" className="btn primary">
-              Check
-            </button>
-            <button type="button" className="btn" onClick={reveal}>
-              Show solution
-            </button>
-          </>
-        )}
-        <button type="button" className={`btn ${done ? 'primary' : ''}`} onClick={onNext}>
-          {done ? 'Next question →' : 'Skip →'}
-        </button>
-      </div>
+      <ActionBar
+        done={done}
+        onNext={onNext}
+        onBack={onBack}
+        check={{}}
+        reveal={{ label: 'Show solution', onClick: reveal }}
+      />
     </form>
   )
 }

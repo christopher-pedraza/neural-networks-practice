@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { loadAll, type LoadedData } from './lib/data'
 import { usePractice } from './hooks/usePractice'
+import { useAnswered } from './hooks/useAnswered'
 import { usePersistedSelection } from './hooks/usePersistedSelection'
 import { CategoryFilter } from './components/CategoryFilter'
 import { TypeFilter } from './components/TypeFilter'
+import { ConfirmDialog } from './components/ConfirmDialog'
 import { QuestionView } from './components/QuestionView'
 import { ReferencePanel } from './components/ReferencePanel'
 import type { QuestionType } from './types'
@@ -12,6 +14,8 @@ import type { QuestionType } from './types'
 const CATEGORIES_KEY = 'pa-practice:hidden-categories'
 const TYPES_KEY = 'pa-practice:hidden-types'
 const PLACEHOLDER_KEY = 'pa-practice:show-placeholders'
+const ANSWERED_KEY = 'pa-practice:answered'
+const HIDE_ANSWERED_KEY = 'pa-practice:hide-answered'
 
 /** Per-session (sessionStorage) so it survives a reload but resets in a new tab/session. */
 function loadShowPlaceholders(): boolean {
@@ -55,14 +59,52 @@ function Practice({ data }: { data: LoadedData }) {
     () => data.questions.filter((q) => selected.has(q.category) && selectedTypes.has(q.type)),
     [data.questions, selected, selectedTypes],
   )
-  const { current, next, instanceKey } = usePractice(pool)
+
+  // "Answered" = checked or revealed at least once. It is remembered across visits, and by default
+  // answered questions drop out of the queue until progress is reset.
+  const answered = useAnswered(ANSWERED_KEY)
+  const [hideAnswered, setHideAnswered] = useState(() => {
+    try {
+      return localStorage.getItem(HIDE_ANSWERED_KEY) !== 'false'
+    } catch {
+      return true
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(HIDE_ANSWERED_KEY, String(hideAnswered))
+    } catch {
+      /* storage unavailable: the toggle still works for this page load */
+    }
+  }, [hideAnswered])
+  const [resetNonce, setResetNonce] = useState(0)
+  const { current, next, back, canBack, instanceKey } = usePractice(pool, {
+    answered: answered.ids,
+    hideAnswered,
+    resetNonce,
+  })
+  const answeredInPool = useMemo(() => pool.filter((q) => answered.ids.has(q.id)).length, [pool, answered.ids])
 
   const [stats, setStats] = useState({ attempted: 0, firstTry: 0 })
   const onGraded = useCallback(
-    (correct: boolean) =>
-      setStats((s) => ({ attempted: s.attempted + 1, firstTry: s.firstTry + (correct ? 1 : 0) })),
-    [],
+    (correct: boolean) => {
+      if (!current) return
+      // Re-doing a question you already finished doesn't count towards the score again.
+      if (!answered.ids.has(current.id)) {
+        setStats((s) => ({ attempted: s.attempted + 1, firstTry: s.firstTry + (correct ? 1 : 0) }))
+      }
+      answered.add(current.id)
+    },
+    [current, answered],
   )
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const closeReset = useCallback(() => setConfirmingReset(false), [])
+  const resetProgress = useCallback(() => {
+    setConfirmingReset(false)
+    answered.clear()
+    setStats({ attempted: 0, firstTry: 0 })
+    setResetNonce((n) => n + 1)
+  }, [answered])
 
   const [showPlaceholders, setShowPlaceholders] = useState(loadShowPlaceholders)
   useEffect(() => {
@@ -88,6 +130,16 @@ function Practice({ data }: { data: LoadedData }) {
           <span className="stats" title="Questions answered correctly on the first check">
             First-try correct: <strong>{stats.firstTry}</strong> / {stats.attempted}
           </span>
+          <span className="stats" title="Questions finished (checked or revealed) in the current selection">
+            Answered: <strong>{answeredInPool}</strong> / {pool.length}
+          </span>
+          <label className="toggle" title="Leave questions you have already finished out of the queue">
+            <input type="checkbox" checked={hideAnswered} onChange={(e) => setHideAnswered(e.target.checked)} />
+            Hide answered
+          </label>
+          <button type="button" className="btn small" onClick={() => setConfirmingReset(true)} title="Mark every question as unanswered again">
+            Reset progress
+          </button>
           <label className="toggle" title="Placeholders under each blank are hints; hide them to practise from memory">
             <input
               type="checkbox"
@@ -118,9 +170,27 @@ function Practice({ data }: { data: LoadedData }) {
             q={current}
             onGraded={onGraded}
             onNext={next}
+            onBack={canBack ? back : undefined}
             onOpenReference={openReference}
             showPlaceholders={showPlaceholders}
           />
+        ) : pool.length > 0 ? (
+          <div className="status all-done">
+            <p>🎉 You have answered every question in the current selection.</p>
+            <div className="done-actions">
+              {canBack && (
+                <button type="button" className="btn" onClick={back}>
+                  ← Back
+                </button>
+              )}
+              <button type="button" className="btn" onClick={() => setHideAnswered(false)}>
+                Review answered questions
+              </button>
+              <button type="button" className="btn primary" onClick={() => setConfirmingReset(true)}>
+                Reset progress
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="status">
             {counts.size === 0
@@ -129,6 +199,16 @@ function Practice({ data }: { data: LoadedData }) {
           </div>
         )}
       </main>
+
+      {confirmingReset && (
+        <ConfirmDialog
+          title="Reset progress?"
+          message="Every question will count as unanswered again and your first-try score goes back to zero."
+          confirmLabel="Yes, reset"
+          onConfirm={resetProgress}
+          onCancel={closeReset}
+        />
+      )}
 
       {refOpen && (
         <ReferencePanel
