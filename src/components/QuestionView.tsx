@@ -24,6 +24,8 @@ interface Props {
 export function QuestionView({ q, onGraded, onNext, onBack, onOpenReference, showPlaceholders = true }: Props) {
   // The related APIs name the functions you need to recall, so they stay hidden until asked for (per question).
   const [relatedShown, setRelatedShown] = useState(false)
+  const [slidesShown, setSlidesShown] = useState(false)
+  const slides = q.slides ?? []
   const related = q.related_reference ?? []
   return (
     <article className="question">
@@ -67,6 +69,25 @@ export function QuestionView({ q, onGraded, onNext, onBack, onOpenReference, sho
               <button key={name} type="button" className="chip link" onClick={() => onOpenReference(name)}>
                 {name}
               </button>
+            ))}
+        </div>
+      )}
+
+      {slides.length > 0 && (
+        <div className="related">
+          <button
+            type="button"
+            className="btn small"
+            aria-expanded={slidesShown}
+            onClick={() => setSlidesShown((v) => !v)}
+          >
+            🎞 {slidesShown ? 'Hide course slides' : `Show course slides (${slides.length})`}
+          </button>
+          {slidesShown &&
+            slides.map(({ deck, page }) => (
+              <span key={`${deck}-${page}`} className="chip" title={`${deck}.pdf, printed slide number ${page}`}>
+                {deck.replace(/_/g, ' ')} · slide {page}
+              </span>
             ))}
         </div>
       )}

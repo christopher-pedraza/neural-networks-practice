@@ -5,6 +5,7 @@
     "questions/pa3_notebook.jsonl",
     "questions/pa4_notebook.jsonl",
     "questions/pa5_notebook.jsonl",
+    "questions/pa6_notebook.jsonl",
     "questions/generalassignment1.jsonl",
     "questions/generalassignment2.jsonl",
     "questions/generalassignment3.jsonl",
@@ -15,6 +16,8 @@
     "questions/quiz1b_reference_solution.jsonl",
     "questions/quiz2_a_answers.jsonl",
     "questions/quiz2_b_answers.jsonl",
+    "questions/extra_param_count.jsonl",
+    "questions/extra_calculation.jsonl",
     "questions/examples_conceptual.jsonl"
   ],
   "reference": "pytorch_reference.json"

@@ -7,6 +7,8 @@ const GROUP_RULES: { group: string; test: RegExp }[] = [
   { group: 'General assignments', test: /^general\s*assignment/i },
   { group: 'Quizzes', test: /^quiz/i },
   { group: 'Programming assignments', test: /^(p|pa)\s?\d/i },
+  // Practice material that is NOT from a graded homework/quiz (kept apart so the originals stay reviewable).
+  { group: 'Extra practice', test: /^extra/i },
 ]
 
 export const GROUP_ORDER = GROUP_RULES.map((r) => r.group)

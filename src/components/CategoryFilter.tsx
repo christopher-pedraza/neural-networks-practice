@@ -83,7 +83,7 @@ export function CategoryFilter({ counts, selected, onChange }: Props) {
                 onClick={() => toggleOpen(group)}
               >
                 <span className="chevron" aria-hidden="true">{isOpen ? '▾' : '▸'}</span>
-                <span className="group-name">{group}</span>
+                <span className="group-name" title={group}>{group}</span>
                 <span className="count" title={`${nOn} of ${categories.length} selected · ${total} questions`}>
                   {nOn}/{categories.length}
                 </span>
@@ -95,7 +95,7 @@ export function CategoryFilter({ counts, selected, onChange }: Props) {
                   <li key={c}>
                     <label>
                       <input type="checkbox" checked={selected.has(c)} onChange={() => toggle(c)} />
-                      <span className="cat-name">{c}</span>
+                      <span className="cat-name" title={c}>{c}</span>
                       <span className="count">{counts.get(c)}</span>
                     </label>
                     <button type="button" className="linkbtn only" onClick={() => onChange(new Set([c]))}>

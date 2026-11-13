@@ -59,6 +59,20 @@
       "description": "Names of entries (see reference.schema.json 'name') that help with this question. Shown as chips that open the reference panel."
     },
 
+    "slides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["deck", "page"],
+        "properties": {
+          "deck": { "type": "string", "minLength": 1, "description": "Lecture deck, = the PDF file name without extension, e.g. 'C10_DataPreProcessing'." },
+          "page": { "type": "integer", "minimum": 1, "description": "The slide number PRINTED on the slide (footer), not the PDF viewer page. They are equal for every deck except C02_TensorDataStructure, where printed = PDF page + 1 from PDF page 6 on (slide 6 is missing from the export)." }
+        }
+      },
+      "description": "Course slides where the idea behind the question is explained. Shown as text only (the PDFs are not served); find that slide by its printed number yourself."
+    },
+
     "prompt": {
       "type": "string",
       "minLength": 1,

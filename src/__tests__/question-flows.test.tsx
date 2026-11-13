@@ -175,3 +175,13 @@ describe('ReferencePanel', () => {
     expect(search).toHaveValue('') // search cleared so the entry is visible in the list
   })
 })
+
+describe('course slides', () => {
+  it('are hidden until asked for and shown as text', async () => {
+    const q = { ...get('lin-reg-setup-01'), slides: [{ deck: 'C10_DataPreProcessing', page: 12 }] } as Question
+    render(<QuestionView q={q} onGraded={vi.fn()} onNext={vi.fn()} onOpenReference={vi.fn()} />)
+    expect(screen.queryByText(/slide 12/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /show course slides \(1\)/i }))
+    expect(screen.getByText('C10 DataPreProcessing · slide 12')).toBeInTheDocument()
+  })
+})

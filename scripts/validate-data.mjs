@@ -33,6 +33,25 @@ const strayFields = (q) =>
   FIELDS_BY_TYPE[q?.type] ? ALL_CONTENT_FIELDS.filter((f) => f in q && !FIELDS_BY_TYPE[q.type].includes(f)) : []
 const fmt = (errs) => errs.map((e) => `${e.instancePath || '/'} ${e.message}`).join('; ')
 
+// Slide references are `page` = the number PRINTED on the slide. They are checked against the local slide text
+// when it exists (source_files/ is gitignored, so CI only gets the schema check). The text has one PDF page per
+// '---' line; the printed number is in the footer ("P. Wonka  12"). Valid = 1..max(printed footer number, PDF pages).
+const slidesDir = resolve(root, 'source_files/course_material_md')
+const maxSlides = new Map()
+function slideCount(deck) {
+  if (!existsSync(slidesDir)) return undefined
+  if (!maxSlides.has(deck)) {
+    const f = resolve(slidesDir, `${deck}.md`)
+    if (!existsSync(f)) maxSlides.set(deck, 0)
+    else {
+      const text = readFileSync(f, 'utf8')
+      const printed = [...text.matchAll(/Wonka\s+(\d{1,3})\s*$/gm)].map((m) => Number(m[1]))
+      maxSlides.set(deck, Math.max(text.split(/^---$/m).length - 1, ...printed))
+    }
+  }
+  return maxSlides.get(deck)
+}
+
 // ---- manifest -------------------------------------------------------------
 const manifestPath = resolve(dataDir, 'manifest.json')
 if (!existsSync(manifestPath)) {
@@ -121,6 +140,13 @@ for (const file of manifest.questionFiles) {
 
     for (const r of q.related_reference ?? [])
       if (!refNames.has(r)) fail(tag, `related_reference "${r}" not found in reference file`)
+
+    for (const { deck, page } of q.slides ?? []) {
+      const n = slideCount(deck)
+      if (n === undefined) continue // slide text not available here (e.g. CI) - schema-only check
+      if (n === 0) fail(tag, `slides: unknown deck "${deck}"`)
+      else if (page > n) fail(tag, `slides: ${deck} has ${n} pages, got page ${page}`)
+    }
 
     const lines = (q.code ?? '').split('\n')
 

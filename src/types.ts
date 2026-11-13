@@ -8,6 +8,8 @@ interface QuestionBase {
   difficulty?: Difficulty
   tags?: string[]
   related_reference?: string[]
+  /** Course slides that explain the idea (deck = PDF stem, page is 1-based). */
+  slides?: { deck: string; page: number }[]
   /** Optional for programming questions, required (and substantive) for every other type. */
   explanation?: string
 }

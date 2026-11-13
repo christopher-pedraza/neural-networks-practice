@@ -67,6 +67,9 @@ npm run validate                               # reports file:line + problem; fi
   (the `.partN` dots in prompt names become `_` in the id, rename accordingly).
 - PDFs are turned into text with `pdftotext` (poppler); if it is missing the prompt tells you to
   attach the PDF instead.
+- **Slide references**: an optional `slides: [{deck, page}]` field points to the lecture slides behind a question
+  (shown as text, "slide N" = the number printed on the slide, which is what your notes use; the PDFs are not served). Use [`docs/AI_PROMPT_SLIDES.md`](docs/AI_PROMPT_SLIDES.md)
+  to have an agent add them; `node scripts/merge-slides.mjs <mapping.json> <questions.jsonl>` merges a mapping.
 - `public/data/questions/examples_conceptual.jsonl` holds 8 hand-checked example questions (one per type
   from Quiz 1A / General Assignment 6). Delete it (and its manifest line) once you have generated the real files.
 - Question text supports `` `inline code` ``, `**bold**`, blank-line paragraphs and **LaTeX math** (`$x$` inline, `$$...$$` display, rendered by KaTeX; backslashes must be doubled in JSONL, e.g. `\\times`)

@@ -35,7 +35,7 @@ export function TypeFilter({ counts, selected, onChange }: Props) {
           <li key={type}>
             <label>
               <input type="checkbox" checked={selected.has(type)} onChange={() => toggle(type)} />
-              <span className="cat-name">{label}</span>
+              <span className="cat-name" title={label}>{label}</span>
               <span className="count">{counts.get(type)}</span>
             </label>
             <button type="button" className="linkbtn only" onClick={() => onChange(new Set([type]))}>
