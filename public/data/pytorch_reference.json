@@ -349,6 +349,37 @@
       ]
     },
     {
+      "name": "torch.Tensor.dim",
+      "aliases": [
+        "x.dim",
+        ".dim",
+        "dim",
+        "Tensor.ndim",
+        "x.ndim",
+        ".ndim",
+        "ndim",
+        "ndimension",
+        ".ndimension"
+      ],
+      "kind": "method",
+      "module": "torch.Tensor",
+      "signature": "Tensor.dim()   # also Tensor.ndim, Tensor.ndimension()",
+      "summary": "Number of dimensions (rank) of the tensor.",
+      "returns": "int.",
+      "example": "decay = [p for p in model.parameters() if p.dim() > 1]      # weights\nno_decay = [p for p in model.parameters() if p.dim() <= 1]  # biases, norm scales",
+      "notes": [
+        "dim()/ndimension() are methods; ndim is an attribute (no parentheses).",
+        "Common trick: parameters with ndim < 2 (biases, LayerNorm/RMSNorm scales) are excluded from weight decay."
+      ],
+      "see_also": [
+        "torch.Tensor.shape",
+        "torch.Tensor.numel"
+      ],
+      "tags": [
+        "shapes"
+      ]
+    },
+    {
       "name": "torch.Tensor.double",
       "aliases": [
         "x.double",
@@ -541,11 +572,51 @@
         "-inf before softmax gives exactly zero weight."
       ],
       "see_also": [
+        "torch.Tensor.masked_fill_",
+        "torch.inf",
+        "torch.logical_not",
         "torch.where"
       ],
       "tags": [
         "masking",
         "attention"
+      ]
+    },
+    {
+      "name": "torch.Tensor.masked_fill_",
+      "aliases": [
+        "x.masked_fill_",
+        ".masked_fill_",
+        "masked_fill_"
+      ],
+      "kind": "method",
+      "module": "torch.Tensor",
+      "signature": "Tensor.masked_fill_(mask, value)",
+      "summary": "In-place version of masked_fill: overwrites the tensor where mask is True and returns it.",
+      "parameters": [
+        {
+          "name": "mask",
+          "type": "BoolTensor",
+          "description": "Broadcastable to the tensor; True = overwrite."
+        },
+        {
+          "name": "value",
+          "type": "float",
+          "description": "Fill value."
+        }
+      ],
+      "returns": "The same (modified) tensor.",
+      "example": "scores.masked_fill_(~mask[:, None, None, :], float('-inf'))",
+      "notes": [
+        "Mutates the caller: `masked = scores.masked_fill_(...)` makes `masked` and `scores` the same tensor.",
+        "In-place ops on tensors autograd needs for backward can raise an error; prefer masked_fill."
+      ],
+      "see_also": [
+        "torch.Tensor.masked_fill",
+        "torch.where"
+      ],
+      "tags": [
+        "masking"
       ]
     },
     {
@@ -1042,8 +1113,9 @@
         "Move the labels too, not just the inputs."
       ],
       "see_also": [
+        "torch.Tensor.cpu",
         "torch.Tensor.float",
-        "torch.Tensor.cpu"
+        "torch.Tensor.type_as"
       ],
       "tags": [
         "device",
@@ -1109,6 +1181,32 @@
       ]
     },
     {
+      "name": "torch.Tensor.type_as",
+      "aliases": [
+        "x.type_as",
+        ".type_as",
+        "type_as"
+      ],
+      "kind": "method",
+      "module": "torch.Tensor",
+      "signature": "Tensor.type_as(other)",
+      "summary": "Casts the tensor to the dtype (and device type) of `other`.",
+      "returns": "Tensor.",
+      "example": "m = mask[..., None].type_as(x)   # bool mask -> float like x\npooled = (x * m).sum(1) / m.sum(1)",
+      "notes": [
+        "Equivalent to .to(other.dtype) for dtype; use .to(other) to also copy the device.",
+        "A bool mask must be cast before it is multiplied with float activations (or use masked_fill)."
+      ],
+      "see_also": [
+        "torch.Tensor.to",
+        "torch.Tensor.float"
+      ],
+      "tags": [
+        "dtype",
+        "masking"
+      ]
+    },
+    {
       "name": "torch.Tensor.unsqueeze",
       "aliases": [
         "x.unsqueeze",
@@ -1158,6 +1256,27 @@
       ],
       "tags": [
         "shape"
+      ]
+    },
+    {
+      "name": "torch.addmm",
+      "aliases": [
+        "Tensor.addmm",
+        "addmm"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.addmm(input, mat1, mat2, *, beta=1, alpha=1)",
+      "summary": "Fused input + mat1 @ mat2: a linear layer in one call (bias is broadcast over rows).",
+      "returns": "Tensor (n, p) for mat1 (n, m) and mat2 (m, p).",
+      "example": "logits = torch.addmm(b, images, W)   # b: (C,), images: (N, D), W: (D, C)",
+      "see_also": [
+        "torch.mm",
+        "torch.matmul",
+        "torch.nn.Linear"
+      ],
+      "tags": [
+        "linear-algebra"
       ]
     },
     {
@@ -1436,7 +1555,8 @@
         "Order matters when later layers expect a particular channel order."
       ],
       "see_also": [
-        "torch.stack"
+        "torch.stack",
+        "torch.vstack"
       ],
       "tags": [
         "shapes",
@@ -1569,6 +1689,36 @@
       ]
     },
     {
+      "name": "torch.cuda.manual_seed",
+      "aliases": [
+        "cuda.manual_seed"
+      ],
+      "kind": "function",
+      "module": "torch.cuda",
+      "signature": "torch.cuda.manual_seed(seed)",
+      "summary": "Seeds the random number generator of the current GPU only.",
+      "parameters": [
+        {
+          "name": "seed",
+          "type": "int",
+          "description": "Seed value."
+        }
+      ],
+      "example": "torch.manual_seed(42)\ntorch.cuda.manual_seed(42)",
+      "notes": [
+        "torch.cuda.manual_seed_all seeds every GPU; torch.manual_seed already seeds CUDA lazily in recent versions.",
+        "Silently ignored if CUDA is not available."
+      ],
+      "see_also": [
+        "torch.cuda.manual_seed_all",
+        "torch.manual_seed"
+      ],
+      "tags": [
+        "random",
+        "reproducibility"
+      ]
+    },
+    {
       "name": "torch.cuda.manual_seed_all",
       "aliases": [
         "manual_seed_all"
@@ -1586,7 +1736,8 @@
       ],
       "example": "torch.cuda.manual_seed_all(42)",
       "see_also": [
-        "torch.manual_seed"
+        "torch.manual_seed",
+        "torch.cuda.manual_seed"
       ],
       "tags": [
         "random",
@@ -1660,6 +1811,31 @@
       ],
       "tags": [
         "linear-algebra"
+      ]
+    },
+    {
+      "name": "torch.enable_grad",
+      "aliases": [
+        "enable_grad",
+        "with torch.enable_grad()",
+        "@torch.enable_grad()"
+      ],
+      "kind": "context_manager",
+      "module": "torch",
+      "signature": "with torch.enable_grad(): ...   # or @torch.enable_grad()",
+      "summary": "Re-enables gradient tracking inside a block, even when an outer no_grad / set_grad_enabled(False) is active. Also works as a decorator.",
+      "example": "@torch.enable_grad()\ndef train_step(model, x, y, opt):\n    ...",
+      "notes": [
+        "Does not override torch.inference_mode.",
+        "Typical use: a training function that may be called from inside an evaluation loop wrapped in no_grad."
+      ],
+      "see_also": [
+        "torch.no_grad",
+        "torch.set_grad_enabled",
+        "torch.inference_mode"
+      ],
+      "tags": [
+        "autograd"
       ]
     },
     {
@@ -1748,6 +1924,9 @@
       "example": "x = torch.randn(8, 1, 28, 28)\nx.flatten(1).shape  # torch.Size([8, 784])",
       "tags": [
         "shape"
+      ],
+      "see_also": [
+        "torch.nn.Flatten"
       ]
     },
     {
@@ -1920,7 +2099,9 @@
         "Add a singleton axis to the labels (unsqueeze) so index has the same rank as input; squeeze afterwards if needed."
       ],
       "see_also": [
-        "torch.Tensor.unsqueeze"
+        "torch.Tensor.unsqueeze",
+        "torch.index_select",
+        "torch.logsumexp"
       ],
       "tags": [
         "indexing",
@@ -1964,6 +2145,68 @@
       ]
     },
     {
+      "name": "torch.index_select",
+      "aliases": [
+        "Tensor.index_select",
+        "x.index_select",
+        ".index_select",
+        "index_select"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.index_select(input, dim, index)",
+      "summary": "Selects entries along one dimension using a 1-D LongTensor of indices (rows of an embedding matrix, for instance).",
+      "parameters": [
+        {
+          "name": "dim",
+          "type": "int",
+          "description": "Dimension to index."
+        },
+        {
+          "name": "index",
+          "type": "LongTensor (1-D)",
+          "description": "Indices to take; must be a tensor, not a Python list."
+        }
+      ],
+      "returns": "Tensor with size len(index) along dim.",
+      "example": "rows = emb_weight.index_select(0, torch.tensor([3, 1, 4]))   # same as emb_weight[[3, 1, 4]]",
+      "notes": [
+        "Plain advanced indexing x[idx] does the same for dim 0.",
+        "Unlike gather, index is 1-D and picks whole slices."
+      ],
+      "see_also": [
+        "torch.gather",
+        "torch.nn.Embedding"
+      ],
+      "tags": [
+        "indexing"
+      ]
+    },
+    {
+      "name": "torch.inf",
+      "aliases": [
+        "inf",
+        "float(\"inf\")"
+      ],
+      "kind": "attribute",
+      "module": "torch",
+      "signature": "torch.inf",
+      "summary": "Positive infinity as a Python float (same as float(\"inf\")); use -torch.inf for masked attention scores.",
+      "example": "scores = scores.masked_fill(~mask, -torch.inf)",
+      "notes": [
+        "softmax of a row that is entirely -inf gives NaN; keep at least one valid key per query.",
+        "-inf (not a large negative like -1e9 in fp16) gives exactly zero attention weight."
+      ],
+      "see_also": [
+        "torch.Tensor.masked_fill",
+        "torch.softmax"
+      ],
+      "tags": [
+        "masking",
+        "attention"
+      ]
+    },
+    {
       "name": "torch.inference_mode",
       "aliases": [
         "inference_mode"
@@ -1977,8 +2220,9 @@
         "Does not switch layers to eval mode."
       ],
       "see_also": [
+        "torch.nn.Module.eval",
         "torch.no_grad",
-        "torch.nn.Module.eval"
+        "torch.set_grad_enabled"
       ],
       "tags": [
         "autograd",
@@ -2112,6 +2356,72 @@
       ]
     },
     {
+      "name": "torch.logical_not",
+      "aliases": [
+        "Tensor.logical_not",
+        "x.logical_not",
+        ".logical_not",
+        "logical_not"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.logical_not(input)",
+      "summary": "Element-wise logical NOT; non-bool inputs are treated as True where non-zero. Always returns a bool tensor.",
+      "returns": "Bool tensor, same shape.",
+      "example": "keep = mask.logical_not()   # same as ~mask for a bool mask\nscores = scores.masked_fill(keep[:, None, None, :], float('-inf'))",
+      "notes": [
+        "For bool masks ~mask is equivalent; ~ on an int/float tensor is NOT logical negation (it is a bitwise op / an error)."
+      ],
+      "see_also": [
+        "torch.Tensor.masked_fill",
+        "torch.where"
+      ],
+      "tags": [
+        "masking"
+      ]
+    },
+    {
+      "name": "torch.logsumexp",
+      "aliases": [
+        "Tensor.logsumexp",
+        "x.logsumexp",
+        ".logsumexp",
+        "logsumexp"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.logsumexp(input, dim, keepdim=False)",
+      "summary": "Numerically stable log(sum(exp(x))) along a dimension (internally subtracts the max before exponentiating).",
+      "parameters": [
+        {
+          "name": "dim",
+          "type": "int or tuple",
+          "description": "Dimension(s) to reduce."
+        },
+        {
+          "name": "keepdim",
+          "type": "bool",
+          "description": "Keep the reduced dim as size 1 so the result broadcasts back against the input.",
+          "default": "False"
+        }
+      ],
+      "returns": "Tensor with the reduced dim removed (or size 1 with keepdim=True).",
+      "example": "# manual cross-entropy: log p = z - logsumexp(z)\nz = logits - logits.max(dim=1, keepdim=True).values\nlog_p = z - torch.logsumexp(z, dim=1, keepdim=True)\nloss = -log_p.gather(1, labels.unsqueeze(1)).mean()",
+      "notes": [
+        "Use keepdim=True when you subtract the result from the original (N, C) tensor.",
+        "log_softmax(z) == z - logsumexp(z, dim=-1, keepdim=True)."
+      ],
+      "see_also": [
+        "torch.nn.functional.log_softmax",
+        "torch.gather",
+        "torch.nn.functional.cross_entropy"
+      ],
+      "tags": [
+        "loss",
+        "numerical-stability"
+      ]
+    },
+    {
       "name": "torch.manual_seed",
       "aliases": [
         "manual_seed"
@@ -2227,10 +2537,49 @@
       "returns": "(n, p) Tensor.",
       "example": "torch.mm(A, B.t())",
       "see_also": [
+        "torch.addmm",
         "torch.matmul"
       ],
       "tags": [
         "linear-algebra"
+      ]
+    },
+    {
+      "name": "torch.nn.BCEWithLogitsLoss",
+      "aliases": [
+        "nn.BCEWithLogitsLoss",
+        "BCEWithLogitsLoss"
+      ],
+      "kind": "class",
+      "module": "torch.nn",
+      "signature": "torch.nn.BCEWithLogitsLoss(weight=None, reduction='mean', pos_weight=None)",
+      "summary": "Module form of binary_cross_entropy_with_logits: sigmoid + BCE on raw logits with 0/1 float targets (numerically stable).",
+      "parameters": [
+        {
+          "name": "reduction",
+          "type": "str",
+          "description": "'mean' | 'sum' | 'none'.",
+          "default": "'mean'"
+        },
+        {
+          "name": "pos_weight",
+          "type": "Tensor",
+          "description": "Weight on the positive class, useful for imbalanced data.",
+          "default": "None"
+        }
+      ],
+      "example": "criterion = nn.BCEWithLogitsLoss()\nloss = criterion(logits, labels.float())",
+      "notes": [
+        "Do not put a sigmoid in the model and then use this loss (sigmoid would be applied twice).",
+        "Targets must be float and the same shape as the logits."
+      ],
+      "see_also": [
+        "torch.nn.functional.binary_cross_entropy_with_logits",
+        "torch.nn.functional.binary_cross_entropy",
+        "torch.nn.CrossEntropyLoss"
+      ],
+      "tags": [
+        "loss"
       ]
     },
     {
@@ -2437,6 +2786,48 @@
       "tags": [
         "layer",
         "nlp"
+      ],
+      "see_also": [
+        "torch.index_select"
+      ]
+    },
+    {
+      "name": "torch.nn.Flatten",
+      "aliases": [
+        "nn.Flatten",
+        "Flatten"
+      ],
+      "kind": "class",
+      "module": "torch.nn",
+      "signature": "torch.nn.Flatten(start_dim=1, end_dim=-1)",
+      "summary": "Flattens all dims from start_dim (default 1, keeping the batch dim) to end_dim into one; the layer form of x.flatten(1).",
+      "parameters": [
+        {
+          "name": "start_dim",
+          "type": "int",
+          "description": "First dim to flatten.",
+          "default": "1"
+        },
+        {
+          "name": "end_dim",
+          "type": "int",
+          "description": "Last dim to flatten.",
+          "default": "-1"
+        }
+      ],
+      "returns": "(N, C*H*W) for an (N, C, H, W) input.",
+      "example": "head = nn.Sequential(nn.Flatten(), nn.Linear(16 * 5 * 5, 10))",
+      "notes": [
+        "No parameters. The in_features of the next Linear must equal C*H*W.",
+        "Unlike torch.flatten, the default start_dim is 1, not 0."
+      ],
+      "see_also": [
+        "torch.flatten",
+        "torch.Tensor.reshape",
+        "torch.nn.Linear"
+      ],
+      "tags": [
+        "shapes"
       ]
     },
     {
@@ -2569,6 +2960,51 @@
       "tags": [
         "loss",
         "regression"
+      ]
+    },
+    {
+      "name": "torch.nn.MaxPool2d",
+      "aliases": [
+        "nn.MaxPool2d",
+        "MaxPool2d"
+      ],
+      "kind": "class",
+      "module": "torch.nn",
+      "signature": "torch.nn.MaxPool2d(kernel_size, stride=None, padding=0)",
+      "summary": "Takes the max over sliding windows of each channel independently. No learnable parameters; channels are unchanged.",
+      "parameters": [
+        {
+          "name": "kernel_size",
+          "type": "int or tuple",
+          "description": "Window size."
+        },
+        {
+          "name": "stride",
+          "type": "int or tuple",
+          "description": "Step; defaults to kernel_size.",
+          "default": "kernel_size"
+        },
+        {
+          "name": "padding",
+          "type": "int or tuple",
+          "description": "Implicit -inf padding on both sides.",
+          "default": "0"
+        }
+      ],
+      "returns": "(N, C, floor((H + 2p - k) / s) + 1, floor((W + 2p - k) / s) + 1).",
+      "example": "pool = nn.MaxPool2d(2)   # (N, C, H, W) -> (N, C, H//2, W//2) for even H, W",
+      "notes": [
+        "The floor means odd sizes drop the last row/column (e.g. 5 -> 2 with k=2).",
+        "0 parameters."
+      ],
+      "see_also": [
+        "torch.nn.functional.max_pool2d",
+        "torch.nn.Conv2d",
+        "torch.nn.Flatten"
+      ],
+      "tags": [
+        "pooling",
+        "shapes"
       ]
     },
     {
@@ -2930,6 +3366,28 @@
       ]
     },
     {
+      "name": "torch.nn.ReLU",
+      "aliases": [
+        "nn.ReLU",
+        "ReLU"
+      ],
+      "kind": "class",
+      "module": "torch.nn",
+      "signature": "torch.nn.ReLU(inplace=False)",
+      "summary": "Rectified linear unit module: max(0, x). Has no parameters, so it adds nothing to a parameter count and does not change the shape.",
+      "example": "block = nn.Sequential(nn.Conv2d(1, 6, 5), nn.ReLU(), nn.MaxPool2d(2))",
+      "notes": [
+        "Parameter-free layers (ReLU, MaxPool2d, Flatten, Dropout) contribute 0 to the count."
+      ],
+      "see_also": [
+        "torch.nn.functional.relu",
+        "torch.nn.GELU"
+      ],
+      "tags": [
+        "activation"
+      ]
+    },
+    {
       "name": "torch.nn.Sequential",
       "aliases": [
         "nn.Sequential",
@@ -3009,6 +3467,43 @@
       ]
     },
     {
+      "name": "torch.nn.functional.binary_cross_entropy",
+      "aliases": [
+        "F.binary_cross_entropy",
+        "nn.functional.binary_cross_entropy",
+        "binary_cross_entropy"
+      ],
+      "kind": "function",
+      "module": "torch.nn.functional",
+      "signature": "torch.nn.functional.binary_cross_entropy(input, target, reduction='mean')",
+      "summary": "Binary cross-entropy on PROBABILITIES in [0, 1] (after a sigmoid). Less stable than the with_logits version.",
+      "parameters": [
+        {
+          "name": "input",
+          "type": "Tensor",
+          "description": "Probabilities, not logits."
+        },
+        {
+          "name": "target",
+          "type": "Tensor",
+          "description": "Same shape, float 0/1."
+        }
+      ],
+      "returns": "Tensor.",
+      "example": "loss = F.binary_cross_entropy(torch.sigmoid(logits), labels.float())   # prefer binary_cross_entropy_with_logits",
+      "notes": [
+        "Passing raw logits raises an error or gives wrong values; passing sigmoid(logits) to the with_logits variant is the opposite bug."
+      ],
+      "see_also": [
+        "torch.nn.functional.binary_cross_entropy_with_logits",
+        "torch.nn.BCEWithLogitsLoss",
+        "torch.sigmoid"
+      ],
+      "tags": [
+        "loss"
+      ]
+    },
+    {
       "name": "torch.nn.functional.binary_cross_entropy_with_logits",
       "aliases": [
         "F.binary_cross_entropy_with_logits",
@@ -3038,7 +3533,9 @@
         "Don't pass sigmoid(logits)."
       ],
       "see_also": [
-        "torch.sigmoid"
+        "torch.sigmoid",
+        "torch.nn.BCEWithLogitsLoss",
+        "torch.nn.functional.binary_cross_entropy"
       ],
       "tags": [
         "loss"
@@ -3225,8 +3722,9 @@
         "Better than log(softmax(x)), which underflows for confident predictions."
       ],
       "see_also": [
-        "torch.nn.functional.cross_entropy",
-        "torch.gather"
+        "torch.gather",
+        "torch.logsumexp",
+        "torch.nn.functional.cross_entropy"
       ],
       "tags": [
         "loss"
@@ -3255,6 +3753,9 @@
       "example": "F.max_pool2d(x, kernel_size=2, stride=2)  # halves H and W",
       "tags": [
         "pooling"
+      ],
+      "see_also": [
+        "torch.nn.MaxPool2d"
       ]
     },
     {
@@ -3312,6 +3813,9 @@
       "example": "x = F.relu(self.conv1(x))",
       "tags": [
         "activation"
+      ],
+      "see_also": [
+        "torch.nn.ReLU"
       ]
     },
     {
@@ -3539,7 +4043,10 @@
         "Does NOT change layer behaviour (dropout, batch-norm); use model.eval() for that."
       ],
       "see_also": [
-        "torch.nn.Module.eval"
+        "torch.enable_grad",
+        "torch.inference_mode",
+        "torch.nn.Module.eval",
+        "torch.set_grad_enabled"
       ],
       "tags": [
         "autograd",
@@ -3864,7 +4371,9 @@
     {
       "name": "torch.outer",
       "aliases": [
-        "outer"
+        "outer",
+        "torch.ger",
+        "ger"
       ],
       "kind": "function",
       "module": "torch",
@@ -4041,6 +4550,30 @@
       ]
     },
     {
+      "name": "torch.reciprocal",
+      "aliases": [
+        "Tensor.reciprocal",
+        "x.reciprocal",
+        ".reciprocal",
+        "reciprocal"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.reciprocal(input)",
+      "summary": "Element-wise 1 / x.",
+      "example": "inv_rms = torch.reciprocal(torch.sqrt(x.pow(2).mean(-1, keepdim=True) + eps))",
+      "notes": [
+        "torch.rsqrt(v) is the fused equivalent of reciprocal(sqrt(v))."
+      ],
+      "see_also": [
+        "torch.rsqrt",
+        "torch.sqrt"
+      ],
+      "tags": [
+        "math"
+      ]
+    },
+    {
       "name": "torch.rsqrt",
       "aliases": [
         "rsqrt"
@@ -4053,6 +4586,10 @@
       "example": "x * torch.rsqrt(ms + eps)",
       "tags": [
         "math"
+      ],
+      "see_also": [
+        "torch.reciprocal",
+        "torch.sqrt"
       ]
     },
     {
@@ -4085,6 +4622,36 @@
       ],
       "tags": [
         "checkpoint"
+      ]
+    },
+    {
+      "name": "torch.set_grad_enabled",
+      "aliases": [
+        "set_grad_enabled",
+        "with torch.set_grad_enabled(False)"
+      ],
+      "kind": "context_manager",
+      "module": "torch",
+      "signature": "torch.set_grad_enabled(mode)",
+      "summary": "Turns gradient tracking on or off from a boolean; usable as a context manager or as a global switch.",
+      "parameters": [
+        {
+          "name": "mode",
+          "type": "bool",
+          "description": "True = track gradients, False = do not."
+        }
+      ],
+      "example": "with torch.set_grad_enabled(is_train):\n    loss = criterion(model(x), y)",
+      "notes": [
+        "One function for a shared train/eval code path; set_grad_enabled(False) is equivalent to no_grad."
+      ],
+      "see_also": [
+        "torch.no_grad",
+        "torch.enable_grad",
+        "torch.inference_mode"
+      ],
+      "tags": [
+        "autograd"
       ]
     },
     {
@@ -4507,6 +5074,27 @@
       "tags": [
         "data",
         "split"
+      ]
+    },
+    {
+      "name": "torch.vstack",
+      "aliases": [
+        "vstack"
+      ],
+      "kind": "function",
+      "module": "torch",
+      "signature": "torch.vstack(tensors)",
+      "summary": "Concatenates along dim 0 after promoting 1-D tensors to rows (like torch.cat(dim=0) but 1-D inputs become (1, n)).",
+      "example": "h = torch.vstack([norm(h[:-1]), h[-1:]])   # (T-1, D) + (1, D) -> (T, D)",
+      "notes": [
+        "torch.cat is the more explicit choice when every input already has a leading dim."
+      ],
+      "see_also": [
+        "torch.cat",
+        "torch.stack"
+      ],
+      "tags": [
+        "shapes"
       ]
     },
     {
